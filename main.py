@@ -14,24 +14,53 @@ import argparse
 
 import torch
 
-
-from posembd.datasets import DatasetsPreparer, UsableDataset
+import posembd
 from posembd.models import createPOSModel
 
+from posembd_utils import *
+from globals import DATASETS as datasets
+from globals import DATASETS_DIR as datasetsDir
+
+
+torch.set_printoptions(threshold=10000)
+
+# Seting device
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 ##################################### HANDLING ARGS ###################################
+
+DEFAULT_EPOCHS = 55
+DEFAULT_BATCH_SIZE = 32
+DEFAULT_GRAD_CLIPPING = 25
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-mp", "--modelPath", required = True)
 parser.add_argument("-wes", "--wordEmbeddingSize", required = True)
 parser.add_argument("-ces", "--charEmbeddingSize", required = True)
-parser.add_argument("-bs", "--BILSTMSize", required = True)
+parser.add_argument("-bis", "--bilstmSize", required = True)
+parser.add_argument("-e", "--epochs", required = False)
+parser.add_argument("-bs", "--batchSize", required = False)
+parser.add_argument("-gc", "--gradClipping", required = False)
 args = parser.parse_args()
+
+parameters = {
+    'epochs': args.epochs if args.epochs is not None else DEFAULT_EPOCHS,
+    'batchSize': args.batchSize if args.batchSize is not None else DEFAULT_BATCH_SIZE,
+    'gradClipping': args.gradClipping if args.gradClipping is not None else DEFAULT_GRAD_CLIPPING,
+}
 
 
 # Path to trained posembd model
-modelPath = args['modelPath']
+modelPath = args.modelPath
+charEmbeddingSize = int(args.charEmbeddingSize)
+wordEmbeddingSize = int(args.wordEmbeddingSize)
+bilstmSize = int(args.bilstmSize)
 
-posModel = createPOSModel(args, char2id, datasets)
+datasets, id2char, char2id = loadDatasets(datasets, datasetsDir)
+
+posModel = createPOSModel(charEmbeddingSize, wordEmbeddingSize, bilstmSize, char2id, datasets)
 posModel.to(device)
+
+train(device, posModel, modelPath, datasets, parameters)
