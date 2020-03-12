@@ -1,15 +1,19 @@
 from posembd.base import get_batches
+from posembd.datasets import DatasetsPreparer, UsableDataset
+
+import torch
+import numpy as np
+import time
 
 def loadDatasets(datasets, datasetsDir):
     # Loading datasets from datasets folder
     datasetsPreparer = DatasetsPreparer(datasetsDir)
     datasets = datasetsPreparer.prepare(datasets)
 
-    # Retrieving tags and char dicts
-    tagsFromDatasets = [(dataset.name, dataset.id2tag) for dataset in datasets]
+    # Retrieving dicts
     char2id, id2char = datasetsPreparer.getDicts()
 
-    return datasets, tagsFromDatasets, id2char, char2id
+    return datasets, id2char, char2id
 
 
 def prepLoop(itr, device, model):
@@ -22,6 +26,9 @@ def prepLoop(itr, device, model):
 
     # Feeding the model
     output = model(inputs)
+
+    return inputs, output, targets, datasetName
+
 
 def trainLog(currentLR, name2TrainLoss, name2ValLoss, datasets, duration):
     # Verbose
@@ -72,7 +79,7 @@ def train(device, model, modelPath, datasets, parameters, minValLoss=np.inf):
             optimizer.zero_grad()
 
             # Calculating the loss and the gradients
-            loss = criterion(output[datasetName].view(batchSize * output["length"], -1),
+            loss = criterion(output[name2dataset[datasetName].tagSet].view(batchSize * output["length"], -1),
                              targets.view(batchSize * output["length"]))
             loss.backward()
 
@@ -124,7 +131,7 @@ def accuracy(device, model, datasets):
         inputs, output, targets, datasetName = prepLoop(itr, device, model)
 
         # convert output probabilities to predicted class
-        _, pred = torch.max(output[datasetName], 2)
+        _, pred = torch.max(output[name2dataset[datasetName].tagSet], 2)
 
         # Formatando vetor
         pred = pred.view(1, -1)
@@ -153,50 +160,8 @@ def accuracy(device, model, datasets):
                                                                         name2correctPreds[d.name], name2totalPreds[d.name])
         send_output(outStr, 0)
 
-def tagged_samples(device, model, datasets, id2char):
-    name2dataset = {d.name:d for d in datasets if d.useVal == True}
-    name2taggedSamples = {d.name:([],[]) for d in datasets if d.useVal == True}
 
-
-    model.eval()
-    for itr in get_batches(datasets, "val"):
-        inputs, output, targets, datasetName = prepLoop(itr, device, model)
-
-        # convert output probabilities to predicted class
-        _, pred = torch.max(output[datasetName], 2)
-
-        # Formatando vetor
-        pred = pred.view(1, -1)
-
-        # lists storing the current sample
-        writtenInputs, goldTags, predTags = [], [], []
-
-        # boolean storing if the sentence had one wrong labeled word
-        mistagged = False
-
-        for i in range(output["length"]):
-            # Esse loop inteiro assume que BATCH_SIZE = 1
-
-            if i >= len(targets[0]):
-                break
-            if targets.data[0][i].item() <= 1:
-                continue
-
-            label, predicted = targets.data[0][i], pred.data[0][i]
-
-            if label != predicted:
-                mistagged = True
-
-            writtenInputs.append("".join([id2char[charid] for charid in inputs[0][i]]))
-            goldTags.append(name2dataset[datasetName].id2tag[targets.data[0][i].item()])
-            predTags.append(name2dataset[datasetName].id2tag[pred.data[0][i].item()])
-
-        if mistagged:
-            name2taggedSamples[datasetName][1].append((writtenInputs, goldTags, predTags))
-        else:
-            name2taggedSamples[datasetName][0].append((writtenInputs, goldTags, predTags))
-
-
+def writeDatasetsFiles(name2taggedSamples):
     for datasetName, (correctSamples, mistaggedSamples) in name2taggedSamples.items():
 
         file = open("tagged_samples_{}".format(datasetName),"w", encoding="utf-8")
@@ -231,3 +196,53 @@ def tagged_samples(device, model, datasets, id2char):
                                                    samplePredTags[i]))
 
         file.close()
+
+
+def getTaggedSamples(name2taggedSamples, name2dataset, device, model, datasets, id2char):
+    name2taggedSamples = {d.name:([],[]) for d in datasets if d.useVal == True}
+
+    model.eval()
+    for itr in get_batches(datasets, "val"):
+        inputs, output, targets, datasetName = prepLoop(itr, device, model)
+
+        # convert output probabilities to predicted class
+        _, pred = torch.max(output[name2dataset[datasetName].tagSet], 2)
+
+        # Formatando vetor
+        pred = pred.view(1, -1)
+
+        # lists storing the current sample
+        writtenInputs, goldTags, predTags = [], [], []
+
+        # boolean storing if the sentence had one wrong labeled word
+        mistagged = False
+
+        for i in range(output["length"]):
+            # Esse loop inteiro assume que BATCH_SIZE = 1
+
+            if i >= len(targets[0]):
+                break
+            if targets.data[0][i].item() <= 1:
+                continue
+
+            label, predicted = targets.data[0][i], pred.data[0][i]
+
+            if label != predicted:
+                mistagged = True
+
+            writtenInputs.append("".join([id2char[charid] for charid in inputs[0][i]]))
+            goldTags.append(name2dataset[datasetName].id2tag[targets.data[0][i].item()])
+            predTags.append(name2dataset[datasetName].id2tag[pred.data[0][i].item()])
+
+        if mistagged:
+            name2taggedSamples[datasetName][1].append((writtenInputs, goldTags, predTags))
+        else:
+            name2taggedSamples[datasetName][0].append((writtenInputs, goldTags, predTags))
+
+    return name2taggedSamples
+
+
+def taggedSamples(device, model, datasets, id2char):
+    name2dataset = {d.name:d for d in datasets if d.useVal == True}
+    name2taggedSamples = getTaggedSamples(name2dataset, device, model, datasets, id2char)
+    writeDatasetsFiles(name2taggedSamples)
