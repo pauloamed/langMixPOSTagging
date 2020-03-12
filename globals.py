@@ -8,13 +8,13 @@
 
 DATASETS = [
     {'name': 'Macmorpho', 'trainFile': 'macmorpho-train.mm.txt', 'useTrain': True, 'valFile': 'macmorpho-dev.mm.txt',
-        'useVal': True, 'testFile': 'macmorpho-test.mm.txt'},
+        'useVal': True, 'testFile': 'macmorpho-test.mm.txt', 'tagSet': 'MM'},
     {'name': 'Bosque', 'trainFile': 'pt_bosque-ud-train.mm.txt', 'useTrain': True, 'valFile': 'pt_bosque-ud-dev.mm.txt',
-        'useVal': True, 'testFile': 'pt_bosque-ud-test.mm.txt'},
+        'useVal': True, 'testFile': 'pt_bosque-ud-test.mm.txt', 'tagSet': 'UD'},
     {'name': 'GSD', 'trainFile': 'pt_gsd-ud-train.mm.txt', 'useTrain': True, 'valFile': 'pt_gsd-ud-dev.mm.txt',
-        'useVal': True, 'testFile': 'pt_gsd-ud-test.mm.txt'},
+        'useVal': True, 'testFile': 'pt_gsd-ud-test.mm.txt', 'tagSet': 'UD'},
     {'name': 'Linguateca', 'trainFile': 'lgtc-train.mm.txt', 'useTrain': True, 'valFile': 'lgtc-dev.mm.txt',
-        'useVal': True, 'testFile': 'lgtc-test.mm.txt'}
+        'useVal': True, 'testFile': 'lgtc-test.mm.txt', 'tagSet': 'LT'}
 ]
 
 # Path to folder with datasets
