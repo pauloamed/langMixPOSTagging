@@ -46,9 +46,9 @@ parser.add_argument("-gc", "--gradClipping", required = False)
 args = parser.parse_args()
 
 parameters = {
-    'epochs': args.epochs if args.epochs is not None else DEFAULT_EPOCHS,
-    'batchSize': args.batchSize if args.batchSize is not None else DEFAULT_BATCH_SIZE,
-    'gradClipping': args.gradClipping if args.gradClipping is not None else DEFAULT_GRAD_CLIPPING,
+    'epochs': int(args.epochs) if args.epochs is not None else DEFAULT_EPOCHS,
+    'batchSize': int(args.batchSize) if args.batchSize is not None else DEFAULT_BATCH_SIZE,
+    'gradClipping': int(args.gradClipping) if args.gradClipping is not None else DEFAULT_GRAD_CLIPPING,
 }
 
 
@@ -64,3 +64,4 @@ posModel = createPOSModel(charEmbeddingSize, wordEmbeddingSize, bilstmSize, char
 posModel.to(device)
 
 train(device, posModel, modelPath, datasets, parameters)
+accuracy(device, posModel, datasets)

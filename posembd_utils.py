@@ -30,7 +30,7 @@ def prepLoop(itr, device, model):
     return inputs, output, targets, datasetName
 
 
-def trainLog(currentLR, name2TrainLoss, name2ValLoss, datasets, duration):
+def trainLog(currentLR, epoch, name2TrainLoss, name2ValLoss, datasets, duration):
     # Verbose
     outStr = "\n======================================================================================="
     totalTrainLoss = sum([name2TrainLoss[d.name] for d in datasets if d.useTrain])
@@ -72,7 +72,7 @@ def train(device, model, modelPath, datasets, parameters, minValLoss=np.inf):
         name2ValLoss = {d.name : 0.0 for d in datasets}
 
         model.train()
-        for itr in get_batches(datasets, "train", batchSize, "visconde"):
+        for itr in get_batches(datasets, "train", batchSize, policy="visconde"):
             inputs, output, targets, datasetName = prepLoop(itr, device, model)
 
             # Reseting the gradients
@@ -95,17 +95,18 @@ def train(device, model, modelPath, datasets, parameters, minValLoss=np.inf):
 
         model.eval()
         for itr in get_batches(datasets, "val"):
-            inputs, outputs , targets, datasetName = prepLoop(itr, device, model)
+            inputs, output, targets, datasetName = prepLoop(itr, device, model)
 
             # Calculating the loss and the gradients
-            loss = criterion(output[datasetName].view(output["length"], -1),
+            loss = criterion(output[name2dataset[datasetName].tagSet].view(output["length"], -1),
                              targets.view(output["length"]))
 
             # Updating the loss accu
             name2ValLoss[datasetName] += loss.item()
 
         duration = time.time() - start
-        outStr = trainLog(optimizer.param_groups[0]['lr'], name2TrainLoss, name2ValLoss, datasets, duration)
+        outStr = trainLog(optimizer.param_groups[0]['lr'], epoch, name2TrainLoss, name2ValLoss, datasets, duration)
+        totalValLoss = sum([name2ValLoss[d.name] for d in datasets if d.useVal])
 
         if totalValLoss <= minValLoss:
             torch.save(model.state_dict(), modelPath)
@@ -115,7 +116,7 @@ def train(device, model, modelPath, datasets, parameters, minValLoss=np.inf):
             minValLoss = totalValLoss
         outStr += "=======================================================================================\n"
 
-        send_output(outStr, 0)
+        print(outStr)
 
     return model, minValLoss
 
@@ -149,16 +150,16 @@ def accuracy(device, model, datasets):
 
     correctPredsSum = np.sum([name2correctPreds[d.name] for d in datasets])
     totalPredsSum = np.sum([name2totalPreds[d.name] for d in datasets])
-    acc = 100. * soma_correct / soma_total
+    acc = 100. * correctPredsSum / totalPredsSum
     outStr = '\nTest Accuracy (Overall): %2d%% (%2d/%2d)' % (acc, correctPredsSum, totalPredsSum)
 
-    send_output(outStr, 0)
+    print(outStr)
 
     for d in datasets:
         datasetAccuracy = 100. * name2correctPreds[d.name] / name2totalPreds[d.name]
         outStr = '\nTest Accuracy (on {} Dataset): {:.2f}% ({}/{})'.format(d.name, datasetAccuracy,
                                                                         name2correctPreds[d.name], name2totalPreds[d.name])
-        send_output(outStr, 0)
+        print(outStr)
 
 
 def writeDatasetsFiles(name2taggedSamples):
