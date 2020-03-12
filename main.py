@@ -18,8 +18,11 @@ import posembd
 from posembd.models import createPOSModel
 
 from posembd_utils import *
+from utils import *
 from globals import DATASETS as datasets
 from globals import DATASETS_DIR as datasetsDir
+
+from datetime import datetime
 
 
 torch.set_printoptions(threshold=10000)
@@ -51,12 +54,21 @@ parameters = {
     'gradClipping': int(args.gradClipping) if args.gradClipping is not None else DEFAULT_GRAD_CLIPPING,
 }
 
-
 # Path to trained posembd model
 modelPath = args.modelPath
 charEmbeddingSize = int(args.charEmbeddingSize)
 wordEmbeddingSize = int(args.wordEmbeddingSize)
 bilstmSize = int(args.bilstmSize)
+
+
+datatimeNow = datetime.now()
+log = "Starting training script at {}\n".format(datatimeNow) + \
+        "Model will be saved at {}\n".format(modelPath) + \
+        "WES: {}, CES: {}, BS: {}\n".format(wordEmbeddingSize, charEmbeddingSize, bilstmSize) + \
+        "Epochs: {}, batchSize: {}, gradClipping: {}".format(parameters['epochs'], parameters['batchSize'], parameters['gradClipping'])
+
+print(log)
+printToFile(log, 'log_{}.txt'.format(datatimeNow))
 
 datasets, id2char, char2id = loadDatasets(datasets, datasetsDir)
 
