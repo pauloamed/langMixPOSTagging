@@ -42,7 +42,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-mp", "--modelPath", required = True)
 parser.add_argument("-wes", "--wordEmbeddingSize", required = True)
 parser.add_argument("-ces", "--charEmbeddingSize", required = True)
-parser.add_argument("-bis", "--bilstmSize", required = True)
+parser.add_argument("-pes", "--posEmbeddingSize", required = True)
 parser.add_argument("-e", "--epochs", required = False)
 parser.add_argument("-bs", "--batchSize", required = False)
 parser.add_argument("-gc", "--gradClipping", required = False)
@@ -58,13 +58,13 @@ parameters = {
 modelPath = args.modelPath
 charEmbeddingSize = int(args.charEmbeddingSize)
 wordEmbeddingSize = int(args.wordEmbeddingSize)
-bilstmSize = int(args.bilstmSize)
+posEmbeddingSize = int(args.posEmbeddingSize)
 
 
 datatimeNow = datetime.now()
 log = "Starting training script at {}\n".format(datatimeNow) + \
         "Model will be saved at {}\n".format(modelPath) + \
-        "WES: {}, CES: {}, BS: {}\n".format(wordEmbeddingSize, charEmbeddingSize, bilstmSize) + \
+        "WES: {}, CES: {}, PES: {}\n".format(wordEmbeddingSize, charEmbeddingSize, posEmbeddingSize) + \
         "Epochs: {}, batchSize: {}, gradClipping: {}".format(parameters['epochs'], parameters['batchSize'], parameters['gradClipping'])
 
 print(log)
@@ -72,7 +72,10 @@ printToFile(log, 'log_{}.txt'.format(datatimeNow))
 
 datasets, id2char, char2id = loadDatasets(datasets, datasetsDir)
 
-posModel = createPOSModel(charEmbeddingSize, wordEmbeddingSize, bilstmSize, char2id, datasets)
+for d in datasets:
+    print(d)
+
+posModel = createPOSModel(charEmbeddingSize, wordEmbeddingSize, posEmbeddingSize, char2id, datasets)
 posModel.to(device)
 
 train(device, posModel, modelPath, datasets, parameters)
