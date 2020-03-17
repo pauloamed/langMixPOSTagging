@@ -14,7 +14,11 @@ DATASETS = [
     {'name': 'GSD', 'trainFile': 'pt_gsd-ud-train.mm.txt', 'useTrain': True, 'valFile': 'pt_gsd-ud-dev.mm.txt',
         'useVal': True, 'testFile': 'pt_gsd-ud-test.mm.txt', 'tagSet': 'UD'},
     {'name': 'Linguateca', 'trainFile': 'lgtc-train.mm.txt', 'useTrain': True, 'valFile': 'lgtc-dev.mm.txt',
-        'useVal': True, 'testFile': 'lgtc-test.mm.txt', 'tagSet': 'LT'}
+        'useVal': True, 'testFile': 'lgtc-test.mm.txt', 'tagSet': 'LT'},
+    {'name': 'PennTreeBank', 'trainFile': 'ptb-train.mm.txt', 'useTrain': True, 'valFile': 'ptb-dev.mm.txt',
+        'useVal': True, 'testFile': 'ptb-test.mm.txt', 'tagSet': 'PTB'},
+    {'name': 'EWT', 'trainFile': 'en_ewt-ud-train.mm.txt', 'useTrain': True, 'valFile': 'en_ewt-ud-dev.mm.txt',
+        'useVal': True, 'testFile': 'en_ewt-ud-test.mm.txt', 'tagSet': 'UD'},
 ]
 
 # Path to folder with datasets
