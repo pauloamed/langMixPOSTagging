@@ -46,6 +46,7 @@ parser.add_argument("-pes", "--posEmbeddingSize", required = True)
 parser.add_argument("-e", "--epochs", required = False)
 parser.add_argument("-bs", "--batchSize", required = False)
 parser.add_argument("-gc", "--gradClipping", required = False)
+parser.add_argument("-t", "--testOnly", action = "store_true")
 args = parser.parse_args()
 
 parameters = {
@@ -59,6 +60,8 @@ modelPath = args.modelPath
 charEmbeddingSize = int(args.charEmbeddingSize)
 wordEmbeddingSize = int(args.wordEmbeddingSize)
 posEmbeddingSize = int(args.posEmbeddingSize)
+
+testOnly = args.testOnly
 
 
 datatimeNow = datetime.now()
@@ -78,5 +81,10 @@ for d in datasets:
 posModel = createPOSModel(charEmbeddingSize, wordEmbeddingSize, posEmbeddingSize, char2id, datasets)
 posModel.to(device)
 
-train(device, posModel, modelPath, datasets, parameters)
+
+if not testOnly:
+    train(device, posModel, modelPath, datasets, parameters)
+
+posModel.load_state_dict(torch.load(args.modelPath, map_location=device))
+
 accuracy(device, posModel, datasets)
