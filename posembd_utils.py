@@ -68,6 +68,8 @@ def train(device, model, modelPath, datasets, parameters, minValLoss=np.inf):
     for epoch in range(epochs):
         start = time.time()
 
+        print("Epoch ({}/{})".format(epoch + 1, epochs))
+
         name2TrainLoss = {d.name : 0.0 for d in datasets}
         name2ValLoss = {d.name : 0.0 for d in datasets}
 
